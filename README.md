@@ -7,8 +7,9 @@
 ██╔═══╝ ██║   ██║██║════╝██╔════╝╚════██║
 ██║     ╚██████╔╝██║     ██║     ███████║
 ╚═╝      ╚═════╝ ╚═╝     ╚═╝     ╚══════╝
+
+Pytest Unified Framework for FPGA Simulation
 ```
-Pytest Unified Framework for FPGA Simulation**P**ytest **U**nit **F**ramework for **F**PGA **S**imulation  
 
 ## Features
 - **Pytest integration** — write and run tests like any Python project
