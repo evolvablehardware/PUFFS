@@ -1,0 +1,13 @@
+cocotb
+cocotb-test
+cocotbext-axi
+cocotb-vivado
+pytest
+pytest-xdist
+cocotbext-axi
+matplotlib
+scipy
+pyserial
+pandas
+numpy
+tqdm
