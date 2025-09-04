@@ -18,11 +18,25 @@ class Bench:
 		self.params = {}
 
 	def findRoot():
-		path = Path(__file__).resolve()
-		for parent in [path] + list(path.parents):
-			if (parent / "pytest.ini").is_file():
-				return parent
-		raise FileNotFoundError("pytest.ini not found in any parent directories.")
+		# 1) explicit override
+		env_root = os.environ.get("PUFFS_TEST_ROOT")
+		if env_root:
+			p = Path(env_root).resolve()
+			if (p / "pytest.ini").is_file():
+				return p
+
+		candidates = [Path.cwd().resolve(), Path(__file__).resolve()]
+		seen = set()
+
+		for base in candidates:
+			for parent in [base] + list(base.parents):
+				if parent in seen:
+					continue
+				seen.add(parent)
+				if (parent / "pytest.ini").is_file():
+					return parent
+
+		raise FileNotFoundError("pytest.ini not found starting from CWD or puffs/test.py")
 
 	def source(self, sources):
 		if isinstance(sources, list):

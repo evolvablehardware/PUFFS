@@ -6,7 +6,7 @@ from cocotb.clock import Clock
 from cocotb.binary import BinaryValue
 
 import random
-from driver import fixed
+from puffs import fixed
 
 def randomInt(bounds):
 	if isinstance(bounds, list):
