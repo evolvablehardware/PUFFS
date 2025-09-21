@@ -44,28 +44,46 @@ class Logger:
 		assert self.errs == 0, f"test failed with {self.errs} errors."
 
 class RandomInt:
-	def __init__(self, bounds=(0,2)):
+	def __init__(self, bounds=(0,2), rate=0.5):
 		self.bounds = bounds
-	
-	def next(self):
-		return randomInt(self.bounds)
+		self.rate = rate
+
+	def next(self, forceValid=False):
+		if random.uniform(0.0, 1.0) <= self.rate or forceValid:
+			return randomInt(self.bounds)
+		return None
 
 class RandomReal:
-	def __init__(self, bounds=(0,1)):
+	def __init__(self, bounds=(0,1), rate=0.5):
 		self.bounds = bounds
+		self.rate = rate
 	
-	def next(self):
-		return randomReal(self.bounds)
+	def next(self, forceValid=False):
+		if random.uniform(0.0, 1.0) <= self.rate or forceValid:
+			return randomReal(self.bounds)
+		return None
 
 class TokenList:
-	def __init__(self, values=[0]):
+	def __init__(self, values=[0], rate=0.5):
 		self.values = values
 		self.index = 0
+		self.rate = rate
 
-	def next(self):
-		result = self.values[self.index]
-		self.index = (self.index+1)%len(self.values)
-		return result
+	def next(self, forceValid=False):
+		if random.uniform(0.0, 1.0) <= self.rate or forceValid:
+			result = self.values[self.index]
+			self.index = (self.index+1)%len(self.values)
+			return result
+		return None
+
+class Dataless:
+	def __init__(self, rate=0.5):
+		self.rate = rate
+
+	def next(self, forceValid=False):
+		if random.uniform(0.0, 1.0) <= self.rate or forceValid:
+			return 0
+		return None
 
 class Bits:
 	def __init__(self, signed=False):
@@ -255,9 +273,12 @@ class Channel:
 		return self.index < len(self.tokens)
 
 	def writeVerilog(self, value):
+		if self.valid is not None:
+			self.valid.value = 1 if value is not None else 0
 		if self.data is None:
 			return
-		self.dtype.write(self.data, value)
+		if value is not None:
+			self.dtype.write(self.data, value)
 
 	def readVerilog(self):
 		if self.data is None:
@@ -270,12 +291,8 @@ class Source:
 		self.values = values
 
 		# Python values for the signals we drive
-		self.currValid = 0
-		self.currData = self.values.next()
-
-		if self.chan.valid is not None:
-			self.chan.valid.value = self.currValid
-		self.chan.writeVerilog(self.currData)
+		self.currReq = None
+		self.chan.writeVerilog(self.currReq)
 
 		# record tokens for verification later
 		self.log = log
@@ -285,22 +302,19 @@ class Source:
 		if self.chan.ready is not None:
 			ready = self.chan.ready.value.integer
 
-		if (self.currValid == 0 or ready != 0) and (random.randint(0,1) == 0 or self.chan.valid is None):
-			self.currData = self.values.next()
-			self.currValid = 1
-
-			self.chan.send(self.currData)
-			if self.log is not None:
-				self.log.info(f"{self.chan.name}!{self.currData}")
+		if self.currReq is None or ready != 0:
+			self.currReq = self.values.next(forceValid=self.chan.valid is None)
+			if self.currReq is not None:
+				self.chan.send(self.currReq)
+				if self.log is not None:
+					self.log.info(f"{self.chan.name}!{self.currReq}")
 		elif ready != 0:
-			self.currValid = 0
+			self.currReq = None
 
-		if self.chan.valid is not None:
-			self.chan.valid.value = self.currValid
-		self.chan.writeVerilog(self.currData)
+		self.chan.writeVerilog(self.currReq)
 
 class Sink:
-	def __init__(self, chan, values=RandomInt(), log=None):
+	def __init__(self, chan, values=Dataless(), log=None):
 		self.chan = chan
 		self.values = values
 
@@ -318,11 +332,7 @@ class Sink:
 
 	def precomputeReady(self):
 		self.prevReady = self.currReady
-		n = self.values.next()
-		if n == 0:
-			self.currReady = 0
-		else:
-			self.currReady = 1
+		self.currReady = 1 if self.values.next(forceValid=self.chan.ready is None) is not None else 0
 		self.chan.ready.value = self.currReady
 		self.precomputed = True
 
@@ -346,13 +356,8 @@ class Sink:
 			elif self.log is not None:
 				self.log.info(f"{self.chan.name}?{value}")
 
-		if self.chan.ready is not None:
-			if not self.precomputed:
-				n = self.values.next()
-				if n == 0:
-					self.currReady = 0
-				else:
-					self.currReady = 1
-				self.chan.ready.value = self.currReady
-				self.prevReady = self.currReady
-			self.precomputed = False
+		if not self.precomputed:
+			self.currReady = 1 if self.values.next(forceValid=self.chan.ready is None) is not None else 0
+			self.chan.ready.value = self.currReady
+			self.prevReady = self.currReady
+		self.precomputed = False
