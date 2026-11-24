@@ -9,8 +9,7 @@ setup(
 	author_email='logan@vivum.ai',
 	license='GPL-3.0',
 	packages=['puffs'],
-	install_requires=['cocotb','numpy'],
-
+	install_requires=['cocotb','numpy', 'pytest-cocotb', 'cocotb-test'],
 	classifiers=[
 		'Development Status :: 5 - Production/Stable',
 		'Intended Audience :: Science/Research',

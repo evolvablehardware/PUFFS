@@ -1,11 +1,10 @@
-import cocotb
-from cocotb.triggers import Timer
-from cocotb.triggers import RisingEdge
-from cocotb.triggers import FallingEdge
-from cocotb.clock import Clock
-from cocotb.binary import BinaryValue
-
 import random
+
+import cocotb
+from cocotb.clock import Clock
+from cocotb.triggers import FallingEdge, RisingEdge, Timer
+from cocotb.types import LogicArray
+
 from puffs import fixed
 
 def randomInt(bounds):
@@ -108,8 +107,8 @@ class Bits:
 		if isinstance(signal, list):
 			return [self.read(s) for s in signal]
 		elif self.signed:
-			return self.decode(signal.value.signed_integer)
-		return self.decode(signal.value.integer)
+			return self.decode(signal.value.to_signed())
+		return self.decode(int(signal.value))
  
 class Int(Bits):
 	def __init__(self, signed=False):
@@ -203,10 +202,9 @@ class Slice:
 		self.n_bits = self.signal.value.n_bits
 
 		if not hasattr(self.signal, "vivumValue"):
-			self.signal.vivumValue = BinaryValue(
+			self.signal.vivumValue = LogicArray.from_bytes(
 				"z"*self.n_bits,
-				n_bits=self.n_bits,
-				bigEndian=True)
+				byteorder="big")
 
 	def binstrFromInt(self, i):
 		if i < 0:
@@ -218,24 +216,22 @@ class Slice:
 		return s.rjust(self.toIndex-self.fromIndex, s[-1])[self.fromIndex-self.toIndex:]
 
 	def binstrFromValue(self, value):
-		if isinstance(value, BinaryValue):
+		if isinstance(value, LogicArray):
 			return self.rescaleBinstr(value)
 		return self.binstrFromInt(value)
 
 	@property
 	def value(self):
-		return BinaryValue(
-			self.signal.value.binstr[self.n_bits-self.toIndex:self.n_bits-self.fromIndex],
-			n_bits=(self.toIndex - self.fromIndex),
-			bigEndian=True)
+		return LogicArray(
+			str(self.signal.value)[self.n_bits-self.toIndex:self.n_bits-self.fromIndex],
+			byteorder="big")
 
 	@value.setter
 	def value(self, value):
-		b = self.signal.vivumValue.binstr
-		self.signal.vivumValue = BinaryValue(
+		b = str(self.signal.vivumValue)
+		self.signal.vivumValue = LogicArray(
 			b[0:self.n_bits-self.toIndex] + self.binstrFromValue(value) + b[self.n_bits-self.fromIndex:],
-			n_bits=self.n_bits,
-			bigEndian=True)
+			byteorder="big")
 		self.signal.value = self.signal.vivumValue
 
 class Channel:
@@ -300,7 +296,8 @@ class Source:
 	def cycle(self):
 		ready = 1
 		if self.chan.ready is not None:
-			ready = self.chan.ready.value.integer
+			#TODO: RETVRN HERE (Logic obejct, not LogicArray
+			ready = int(self.chan.ready.value)
 
 		if self.currReq is None or ready != 0:
 			self.currReq = self.values.next(forceValid=self.chan.valid is None)
@@ -339,7 +336,7 @@ class Sink:
 	def cycle(self):
 		valid = 1
 		if self.chan.valid is not None:
-			valid = self.chan.valid.value.integer
+			valid = int(self.chan.valid.value)
 
 		if valid != 0 and self.prevReady != 0:
 			value = self.chan.recv()

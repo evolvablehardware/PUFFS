@@ -1,4 +1,4 @@
-
+# Pytest Unified Framework for FPGA Simulation
 
 ``` shell
 ██████╗ ██╗   ██╗███████╗███████╗███████╗
@@ -7,15 +7,22 @@
 ██╔═══╝ ██║   ██║██║════╝██╔════╝╚════██║
 ██║     ╚██████╔╝██║     ██║     ███████║
 ╚═╝      ╚═════╝ ╚═╝     ╚═╝     ╚══════╝
-
-Pytest Unified Framework for FPGA Simulation
 ```
 
 ## Features
+
 - **Pytest integration** — write and run tests like any Python project
 - **Cocotb power** — simulate Verilog/SystemVerilog designs with Python
 - **Channels** - Channel Level Source and Syncs for Testbenches in Python
 
+## Get started
+
+```shell
+uv venv
+uv sync
+cd example
+uv run pytest
+```
 ## Example Overview
 
 ### Models

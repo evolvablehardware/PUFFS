@@ -1,11 +1,11 @@
+import inspect
 import os
 from pathlib import Path
-import inspect
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.utils import get_sim_time
 from cocotb.triggers import RisingEdge
+from cocotb.utils import get_sim_time
 import cocotb_test.simulator
 
 class Bench:
