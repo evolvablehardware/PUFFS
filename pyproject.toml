@@ -1,0 +1,24 @@
+[project]
+name = "puffs"
+version = "0.1.0"
+description = "PyTest Unit Framework for FPGA Simulation (PUFFS)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "cocotb>=2.1.0",
+    "cocotb-test>=0.3.0",
+    "cocotb-vivado>=0.1.1",
+    "cocotbext-axi>=0.1.28",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.5",
+    "pandas>=3.1.1",
+    "pyserial>=3.5",
+    "pytest>=9.2.0",
+    "pytest-xdist>=3.8.0",
+    "scipy>=1.18.1",
+    "tqdm>=4.70.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"

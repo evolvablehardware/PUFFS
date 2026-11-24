@@ -18,9 +18,10 @@
 ## Get started
 
 ```shell
-pip install --break-system-packages .
+uv venv
+uv sync
 cd example
-pytest
+uv run pytest
 ```
 ## Example Overview
 
